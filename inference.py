@@ -183,10 +183,12 @@ class InferenceModule:
         Return the probability P(noisyDistance | pacmanPosition, ghostPosition).
         """
         if noisyDistance == None:
-            if manhattanDistance(ghostPosition, jailPosition) == 0: #case where ghost is in jail
+            if manhattanDistance(ghostPosition, jailPosition) == 0.0: #case where ghost is in jail
                 return 1
             else:
                 return 0
+        if manhattanDistance(ghostPosition, jailPosition) == 0.0: #case where ghost is in jail
+            return 0
         trueDistance = manhattanDistance(pacmanPosition, ghostPosition)
         probNoisyGivenTrue = busters.getObservationProbability(noisyDistance, trueDistance)
         return probNoisyGivenTrue
@@ -254,6 +256,7 @@ class InferenceModule:
         Update beliefs based on the given distance observation and gameState.
         """
         raise NotImplementedError
+        
 
     def elapseTime(self, gameState):
         """
@@ -299,9 +302,11 @@ class ExactInference(InferenceModule):
         current position. However, this is not a problem, as Pacman's current
         position is known.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
-
+        pacmanPosition = gameState.getPacmanPosition()
+        jailPosition = self.getJailPosition()
+        for ghostPosition in self.allPositions:
+            observationProb = self.getObservationProb(observation, pacmanPosition, ghostPosition, jailPosition)
+            self.beliefs[ghostPosition] *= observationProb
         self.beliefs.normalize()
 
     def elapseTime(self, gameState):
@@ -313,8 +318,16 @@ class ExactInference(InferenceModule):
         Pacman's current position. However, this is not a problem, as Pacman's
         current position is known.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        pacmanPosition = gameState.getPacmanPosition()
+        jailPosition = self.getJailPosition()
+        for oldPos in self.allPositions:
+            newPosDist = self.getPositionDistribution(gameState, oldPos)
+            if manhattanDistance(oldPos, pacmanPosition):
+                self.beliefs[jailPosition] = 1
+            self.beliefs[oldPos] *= newPosDist.total()
+
+        self.beliefs[pacmanPosition] = 0
+        self.beliefs.normalize()
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -340,8 +353,11 @@ class ParticleFilter(InferenceModule):
         self.particles for the list of particles.
         """
         self.particles = []
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        legalPositions = self.legalPositions
+        particlesPerPosition = self.numParticles // len(legalPositions)
+        for i in range(len(legalPositions)):
+            for _ in range(particlesPerPosition):
+                self.particles.append(legalPositions[i])
 
     def observeUpdate(self, observation, gameState):
         """
@@ -374,8 +390,11 @@ class ParticleFilter(InferenceModule):
         
         This function should return a normalized distribution.
         """
-        "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        self.beliefs = DiscreteDistribution()
+        for position in self.particles:
+            self.beliefs[position] += 1
+        self.beliefs.normalize()
+        return self.beliefs
 
 
 class JointParticleFilter(ParticleFilter):
