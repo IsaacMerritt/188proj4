@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -113,7 +113,7 @@ class DiscreteDistribution(dict):
             if r <= running_total:
                 return key
         print("SOMETHING REALLY BAD HAS HAPPENED")
-            
+
 
 
 class InferenceModule:
@@ -192,8 +192,8 @@ class InferenceModule:
         trueDistance = manhattanDistance(pacmanPosition, ghostPosition)
         probNoisyGivenTrue = busters.getObservationProbability(noisyDistance, trueDistance)
         return probNoisyGivenTrue
-        
-        
+
+
 
 
     def setGhostPosition(self, gameState, ghostPosition, index):
@@ -256,7 +256,7 @@ class InferenceModule:
         Update beliefs based on the given distance observation and gameState.
         """
         raise NotImplementedError
-        
+
 
     def elapseTime(self, gameState):
         """
@@ -318,16 +318,14 @@ class ExactInference(InferenceModule):
         Pacman's current position. However, this is not a problem, as Pacman's
         current position is known.
         """
-        pacmanPosition = gameState.getPacmanPosition()
-        jailPosition = self.getJailPosition()
+        newDist = DiscreteDistribution()
         for oldPos in self.allPositions:
             newPosDist = self.getPositionDistribution(gameState, oldPos)
-            if manhattanDistance(oldPos, pacmanPosition):
-                self.beliefs[jailPosition] = 1
-            self.beliefs[oldPos] *= newPosDist.total()
+            for p in self.allPositions:
+                newDist[p] += self.beliefs[oldPos] * newPosDist[p]
 
-        self.beliefs[pacmanPosition] = 0
-        self.beliefs.normalize()
+        newDist.normalize()
+        self.beliefs = newDist
 
     def getBeliefDistribution(self):
         return self.beliefs
@@ -387,7 +385,7 @@ class ParticleFilter(InferenceModule):
         Return the agent's current belief state, a distribution over ghost
         locations conditioned on all evidence and time passage. This method
         essentially converts a list of particles into a belief distribution.
-        
+
         This function should return a normalized distribution.
         """
         self.beliefs = DiscreteDistribution()
