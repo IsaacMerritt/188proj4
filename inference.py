@@ -491,6 +491,7 @@ class JointParticleFilter(ParticleFilter):
         pacmanPosition = gameState.getPacmanPosition()
         newDist = DiscreteDistribution()
         particleWeight = 0
+        self.beliefs = self.getBeliefDistribution()
         for particle in self.particles:
             observations = 1
             for i in range(self.numGhosts):
@@ -531,22 +532,6 @@ class JointParticleFilter(ParticleFilter):
                 newParticle[i] = newPos
             newParticles.append(tuple(newParticle))
         self.particles = newParticles
-        """
-        #######################################
-        newDist = DiscreteDistribution()
-        for oldParticle in self.particles:
-            for i in range(self.numGhosts):
-                newPosDist = self.getPositionDistribution(gameState, oldParticle, i, self.ghostAgents[i])
-                for newParticle in self.particles:
-                    newDist[newParticle] += self.beliefs[oldParticle] * newPosDist[newParticle]
-
-        self.particles = []
-        for _ in range(self.numParticles):
-            self.particles.append(newDist.sample())
-
-        self.beliefs = newDist
-        self.beliefs.normalize()
-        """
 
 
 # One JointInference module is shared globally across instances of MarginalInference
