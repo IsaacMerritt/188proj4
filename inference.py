@@ -373,6 +373,7 @@ class ParticleFilter(InferenceModule):
         jailPosition = self.getJailPosition()
         newDist = DiscreteDistribution()
         particleWeight = 0
+        
         for particle in self.particles:
             newDist[particle] = self.beliefs[particle] * self.getObservationProb(observation, pacmanPosition, particle, jailPosition)
             particleWeight += newDist[particle]
@@ -448,6 +449,12 @@ class JointParticleFilter(ParticleFilter):
         for i in range(len(positions)):
             for _ in range(particlesPerPositions):
                 self.particles.append(positions[i])
+        while len(self.particles) != self.numParticles:
+            if i >= len(positions):
+                i = 0
+            self.particles.append(positions[i])
+            i += 1
+        assert len(self.particles) == self.numParticles
 
         
 
@@ -485,8 +492,8 @@ class JointParticleFilter(ParticleFilter):
         newDist = DiscreteDistribution()
         particleWeight = 0
         for particle in self.particles:
-            observations = self.getObservationProb(observation[0], pacmanPosition, particle[0], self.getJailPosition(0))
-            for i in range(1,self.numGhosts):
+            observations = 1
+            for i in range(self.numGhosts):
                 ghostPosition = particle[i]
                 jailPosition = self.getJailPosition(i)
                 observations *= self.getObservationProb(observation[i], pacmanPosition, ghostPosition, jailPosition)
@@ -514,6 +521,7 @@ class JointParticleFilter(ParticleFilter):
         self.particles = newParticles
         """
 
+        
         newParticles = []
         for oldParticle in self.particles:
             newParticle = list(oldParticle)  # A list of ghost positions
@@ -523,9 +531,8 @@ class JointParticleFilter(ParticleFilter):
                 newParticle[i] = newPos
             newParticles.append(tuple(newParticle))
         self.particles = newParticles
-
-        #######################################
         """
+        #######################################
         newDist = DiscreteDistribution()
         for oldParticle in self.particles:
             for i in range(self.numGhosts):
@@ -537,7 +544,7 @@ class JointParticleFilter(ParticleFilter):
         for _ in range(self.numParticles):
             self.particles.append(newDist.sample())
 
-        elf.beliefs = newDist
+        self.beliefs = newDist
         self.beliefs.normalize()
         """
 
